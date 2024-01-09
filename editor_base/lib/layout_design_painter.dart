@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
@@ -146,6 +147,67 @@ class LayoutDesignPainter extends CustomPainter {
     canvas.drawRect(rectRullerCorner, paintRulerTop);
   }
 
+  static void paintShape(Canvas canvas, Shape shape) {
+    if (shape.vertices.isNotEmpty) {
+      Paint paint = Paint();
+      double x = shape.position.dx + shape.vertices[0].dx;
+      double y = shape.position.dy + shape.vertices[0].dy;
+
+      Path path = Path();
+      path.moveTo(x, y);
+      for (int i = 1; i < shape.vertices.length; i++) {
+        x = shape.position.dx + shape.vertices[i].dx;
+        y = shape.position.dy + shape.vertices[i].dy;
+        path.lineTo(x, y);
+      }
+
+      // Draw stroke
+      if (shape.strokeColor.alpha != 0) {
+        paint.style = PaintingStyle.stroke;
+        paint.color = shape.strokeColor;
+        paint.strokeWidth = shape.strokeWidth;
+        canvas.drawPath(path, paint);
+      }
+    }
+  }
+
+  void paintSelectedRectangle(Canvas canvas, AppData appData, double scale,
+      double translateX, double translateY) {
+    Shape shape = appData.shapesList[appData.shapeSelected];
+
+    // Estem fora dels límits de scale i rotate, cal calcular la posició real 'manualment'
+    if (shape.vertices.isNotEmpty) {
+      double minX = double.infinity, minY = double.infinity;
+      double maxX = -double.infinity, maxY = -double.infinity;
+      double strokeHalf = shape.strokeWidth / 2;
+      for (final vertex in shape.vertices) {
+        double vertexX = shape.position.dx + vertex.dx;
+        double vertexY = shape.position.dy + vertex.dy;
+        minX = min(minX, vertexX);
+        minY = min(minY, vertexY);
+        maxX = max(maxX, vertexX);
+        maxY = max(maxY, vertexY);
+      }
+
+      // Definir els limits compta amb l'stroke
+      minX -= strokeHalf;
+      minY -= strokeHalf;
+      maxX += strokeHalf;
+      maxY += strokeHalf;
+
+      double width = maxX - minX;
+      double height = maxY - minY;
+
+      minX = (minX + translateX) * scale;
+      minY = (minY + translateY) * scale;
+      width *= scale;
+      height *= scale;
+
+      // Dibuixa el requadre de l'objecte seleccionat aquí
+      // fent servir els càlculs anteriors (minX, minY, width, height)
+    }
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     Size docSize = Size(appData.docSize.width, appData.docSize.height);
@@ -184,48 +246,27 @@ class LayoutDesignPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(0, 0, docW, docH), paint);
     }
 
+    // Dibuixa el fons del document aquí ...
+
     // Dibuixa la llista de poligons (segons correspon, relatiu a la seva posició)
     if (appData.shapesList.isNotEmpty) {
       for (int i = 0; i < appData.shapesList.length; i++) {
-        Paint paint = Paint();
-        paint.color = CDKTheme.black;
-        paint.style = PaintingStyle.stroke;
-        paint.strokeWidth = 1;
         Shape shape = appData.shapesList[i];
-        double x = shape.position.dx + shape.vertices[0].dx;
-        double y = shape.position.dy + shape.vertices[0].dy;
-        Path path = Path();
-        path.moveTo(x, y);
-        for (int i = 1; i < shape.vertices.length; i++) {
-          x = shape.position.dx + shape.vertices[i].dx;
-          y = shape.position.dy + shape.vertices[i].dy;
-          path.lineTo(x, y);
-        }
-        canvas.drawPath(path, paint);
+        paintShape(canvas, shape);
       }
     }
 
     // Dibuixa el poligon que s'està afegint (relatiu a la seva posició)
-    if (appData.newShape.vertices.isNotEmpty) {
-      Paint paint = Paint();
-      paint.color = CDKTheme.black;
-      paint.style = PaintingStyle.stroke;
-      paint.strokeWidth = 1;
-      Shape shape = appData.newShape;
-      double x = shape.position.dx + appData.newShape.vertices[0].dx;
-      double y = shape.position.dy + appData.newShape.vertices[0].dy;
-      Path path = Path();
-      path.moveTo(x, y);
-      for (int i = 1; i < appData.newShape.vertices.length; i++) {
-        x = shape.position.dx + shape.vertices[i].dx;
-        y = shape.position.dy + shape.vertices[i].dy;
-        path.lineTo(x, y);
-      }
-      canvas.drawPath(path, paint);
-    }
+    Shape shape = appData.newShape;
+    paintShape(canvas, shape);
 
     // Restaura l'estat previ a l'escalat i translació
     canvas.restore();
+
+    // Dibuixa el requadre de l'objecte seleccionat
+    if (appData.shapeSelected != -1) {
+      paintSelectedRectangle(canvas, appData, scale, translateX, translateY);
+    }
 
     // Dibuixa la regla superior
     drawRulers(canvas, theme, size, docSize, scale, translateX, translateY);
