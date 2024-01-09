@@ -62,6 +62,29 @@ class ActionSetDocWidth implements Action {
   }
 }
 
+class ActionSetcolor implements Action {
+  final Color previouscolor;
+  final Color newcolor;
+  final AppData appData;
+
+  ActionSetcolor(this.appData, this.previouscolor, this.newcolor);
+
+  _action(Color value) {
+    appData.shapeColor = value;
+    appData.forceNotifyListeners();
+  }
+
+  @override
+  void redo() {
+    _action(previouscolor);
+  }
+
+  @override
+  void undo() {
+    _action(newcolor);
+  }
+}
+
 class ActionSetDocHeight implements Action {
   final double previousValue;
   final double newValue;

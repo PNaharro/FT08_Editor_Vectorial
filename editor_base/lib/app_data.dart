@@ -14,6 +14,7 @@ class AppData with ChangeNotifier {
   Size docSize = const Size(500, 400);
   String toolSelected = "shape_drawing";
   Shape newShape = Shape();
+  Color shapeColor = Colors.black;
   List<Shape> shapesList = [];
   int shapeSelected = -1;
   int shapeSelectedPrevious = -1;
@@ -59,6 +60,15 @@ class AppData with ChangeNotifier {
   void setDocWidth(double value) {
     double previousWidth = docSize.width;
     actionManager.register(ActionSetDocWidth(this, previousWidth, value));
+  }
+
+  void setcolor(Color color) {
+    shapeColor = color;
+  }
+
+  void chagecolor(Color color) {
+    Color previouscolor = shapeColor;
+    actionManager.register(ActionSetcolor(this, previouscolor, color));
   }
 
   void setDocHeight(double value) {
@@ -107,6 +117,12 @@ class AppData with ChangeNotifier {
 
   void setNewShapeStrokeWidth(double value) {
     newShape.setStrokeWidth(value);
+    notifyListeners();
+  }
+
+  void setshapecolor(Color color) {
+    setcolor(color);
+    newShape.setStrokeColor(color);
     notifyListeners();
   }
 }
