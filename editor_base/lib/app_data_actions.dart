@@ -62,29 +62,6 @@ class ActionSetDocWidth implements Action {
   }
 }
 
-class ActionSetcolor implements Action {
-  final Color previouscolor;
-  final Color newcolor;
-  final AppData appData;
-
-  ActionSetcolor(this.appData, this.previouscolor, this.newcolor);
-
-  _action(Color value) {
-    appData.shapeColor = value;
-    appData.forceNotifyListeners();
-  }
-
-  @override
-  void redo() {
-    _action(previouscolor);
-  }
-
-  @override
-  void undo() {
-    _action(newcolor);
-  }
-}
-
 class ActionSetDocHeight implements Action {
   final double previousValue;
   final double newValue;
@@ -118,11 +95,149 @@ class ActionAddNewShape implements Action {
   void undo() {
     appData.shapesList.remove(newShape);
     appData.forceNotifyListeners();
+    appData.selectedShapeIndex = -1;
   }
 
   @override
   void redo() {
     appData.shapesList.add(newShape);
+    appData.forceNotifyListeners();
+  }
+}
+
+class ActionRemoveShape implements Action {
+  final AppData appData;
+  final Shape removedShape;
+  int removedShapeIndex = -1;
+
+  ActionRemoveShape(this.appData, this.removedShape);
+
+  @override
+  void undo() {
+    if (removedShapeIndex != -1) {
+      appData.shapesList.insert(removedShapeIndex, removedShape);
+      appData.forceNotifyListeners();
+      appData.selectedShapeIndex = -1;
+    }
+  }
+
+  @override
+  void redo() {
+    removedShapeIndex = appData.shapesList.indexOf(removedShape);
+    if (removedShapeIndex != -1) {
+      appData.shapesList.remove(removedShape);
+      appData.forceNotifyListeners();
+      appData.selectedShapeIndex = -1;
+    }
+  }
+}
+
+class ActionMoveShape implements Action {
+  final AppData appData;
+  final int shapeIndex;
+  final Offset previousOffset;
+  final Offset newOffset;
+
+  ActionMoveShape(
+      this.appData, this.shapeIndex, this.previousOffset, this.newOffset);
+
+  @override
+  void undo() {
+    appData.shapesList[shapeIndex].position = previousOffset;
+    appData.forceNotifyListeners();
+  }
+
+  @override
+  void redo() {
+    appData.shapesList[shapeIndex].position = newOffset;
+    appData.forceNotifyListeners();
+  }
+}
+
+class ActionColorShape implements Action {
+  final AppData appData;
+  final int shapeIndex;
+  final Color previousColor;
+  final Color actualColor;
+
+  ActionColorShape(
+      this.appData, this.previousColor, this.actualColor, this.shapeIndex);
+
+  @override
+  void undo() {
+    appData.shapesList[shapeIndex].color = previousColor;
+    appData.forceNotifyListeners();
+  }
+
+  @override
+  void redo() {
+    appData.shapesList[shapeIndex].color = actualColor;
+    appData.forceNotifyListeners();
+  }
+}
+
+class ActionWidthShape implements Action {
+  final AppData appData;
+  final int shapeIndex;
+  final double previousStroke;
+  final double actualStroke;
+
+  ActionWidthShape(
+      this.appData, this.previousStroke, this.actualStroke, this.shapeIndex);
+
+  @override
+  void undo() {
+    appData.shapesList[shapeIndex].stroke = previousStroke;
+    appData.forceNotifyListeners();
+  }
+
+  @override
+  void redo() {
+    appData.shapesList[shapeIndex].stroke = actualStroke;
+    appData.forceNotifyListeners();
+  }
+}
+
+class ActionClosedShape implements Action {
+  final AppData appData;
+  final int shapeIndex;
+  final bool actualClosedState;
+  final bool previousClosedState;
+
+  ActionClosedShape(this.appData, this.previousClosedState,
+      this.actualClosedState, this.shapeIndex);
+
+  @override
+  void undo() {
+    appData.shapesList[shapeIndex].closed = previousClosedState;
+    appData.forceNotifyListeners();
+  }
+
+  @override
+  void redo() {
+    appData.shapesList[shapeIndex].closed = actualClosedState;
+    appData.forceNotifyListeners();
+  }
+}
+
+class ActionFillColorShape implements Action {
+  final AppData appData;
+  final int shapeIndex;
+  final Color previousFillColor;
+  final Color actualFillColor;
+
+  ActionFillColorShape(this.appData, this.previousFillColor,
+      this.actualFillColor, this.shapeIndex);
+
+  @override
+  void undo() {
+    appData.shapesList[shapeIndex].fillColor = previousFillColor;
+    appData.forceNotifyListeners();
+  }
+
+  @override
+  void redo() {
+    appData.shapesList[shapeIndex].fillColor = actualFillColor;
     appData.forceNotifyListeners();
   }
 }

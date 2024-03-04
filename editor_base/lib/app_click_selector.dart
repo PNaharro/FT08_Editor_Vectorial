@@ -38,7 +38,7 @@ class AppClickSelector {
       maxY = math.max(maxY, vertex.dy);
     }
 
-    double strokeHalf = shape.strokeWidth / 2;
+    double strokeHalf = shape.stroke / 2;
     minX -= strokeHalf;
     minY -= strokeHalf;
     maxX += strokeHalf;
@@ -119,13 +119,21 @@ class AppClickSelector {
     canvas.translate(translateX, translateY);
 
     // Per un si cas és transparent, forçe el color negre
-    Color tmpStroke = shape.strokeColor;
-    shape.strokeColor = Colors.black;
+    Color tmpStroke = shape.color;
+    shape.color = Colors.black;
+
+    Color tmpFill = shape.fillColor;
+    if (tmpFill.alpha != 0) {
+      print("entre");
+      shape.fillColor = appData.fillcolor;
+    }
 
     // Dibuixa el poligon que s'està afegint
     LayoutDesignPainter.paintShape(canvas, shape);
 
-    shape.strokeColor = tmpStroke;
+    shape.color = tmpStroke;
+    double tmpStrokeWidth = shape.stroke;
+    shape.fillColor = tmpFill;
 
     // Restaura l'estat previ
     canvas.restore();

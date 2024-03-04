@@ -1,30 +1,45 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
-class Shape {
+import 'package:flutter/material.dart';
+
+abstract class Shape {
   Offset position = const Offset(0, 0);
+  Size scale = const Size(1, 1);
+  double rotation = 0;
   List<Offset> vertices = [];
-  double strokeWidth = 1;
-  Color strokeColor = const Color(0xFF000000);
+
+  double stroke = 1;
+  Color color = Colors.black;
+
+  bool closed = false;
+
+  Color fillColor = Color(0x00000000);
 
   Shape();
 
-  void setPosition(Offset newPosition) {
-    position = newPosition;
-  }
+  void setclosed(bool valor);
 
-  void addPoint(Offset point) {
-    vertices.add(Offset(point.dx, point.dy));
-  }
+  void setColor(Color newColor);
 
-  void addRelativePoint(Offset point) {
-    vertices.add(Offset(point.dx - position.dx, point.dy - position.dy));
-  }
+  void setFillColor(Color newColor);
 
-  void setStrokeWidth(double width) {
-    strokeWidth = width;
-  }
+  void setStrokeWidth(double size);
 
-  void setStrokeColor(Color color) {
-    strokeColor = color;
+  void setPosition(Offset newPosition);
+
+  void setScale(Size newScale);
+
+  void setRotation(double newRotation);
+
+  void addPoint(Offset point);
+
+  void addRelativePoint(Offset point);
+
+  Map<String, dynamic> toMap();
+
+  static Shape fromMap(Map<String, dynamic> map) {
+    // TODO: implement fromMap
+    throw UnimplementedError();
   }
 }

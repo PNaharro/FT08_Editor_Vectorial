@@ -11,9 +11,16 @@ class LayoutSidebarDocument extends StatefulWidget {
 }
 
 class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
+  late Widget _preloadedColorPicker;
+  final GlobalKey<CDKDialogPopoverState> _anchorColorButton = GlobalKey();
+  final ValueNotifier<Color> _valueColorNotifier =
+      ValueNotifier(const Color(0x800080FF));
   @override
   Widget build(BuildContext context) {
+    _preloadedColorPicker = _buildPreloadedColorPicker();
     AppData appData = Provider.of<AppData>(context);
+    CDKTheme theme = CDKThemeNotifier.of(context)!.changeNotifier;
+    Color backgroundColor = theme.backgroundSecondary2;
 
     TextStyle fontBold =
         const TextStyle(fontSize: 12, fontWeight: FontWeight.bold);
@@ -84,10 +91,57 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
                         width: labelsWidth,
                         child: Text("Background color:", style: font)),
                     const SizedBox(width: 4),
+                    CDKButtonColor(
+                      key: _anchorColorButton,
+                      color: _valueColorNotifier.value,
+                      onPressed: () {
+                        _showPopoverColor(context, _anchorColorButton);
+                      },
+                    ),
+                    const SizedBox(width: 4),
                   ],
                 ),
                 const SizedBox(height: 16),
               ]);
+        },
+      ),
+    );
+  }
+
+  _showPopoverColor(BuildContext context, GlobalKey anchorKey) {
+    final GlobalKey<CDKDialogPopoverArrowedState> key = GlobalKey();
+    if (anchorKey.currentContext == null) {
+      // ignore: avoid_print
+      print("Error: anchorKey not assigned to a widget");
+      return;
+    }
+    CDKDialogsManager.showPopoverArrowed(
+      key: key,
+      context: context,
+      anchorKey: anchorKey,
+      isAnimated: true,
+      isTranslucent: false,
+      onHide: () {},
+      child: _preloadedColorPicker,
+    );
+  }
+
+  Widget _buildPreloadedColorPicker() {
+    AppData appData = Provider.of<AppData>(context);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ValueListenableBuilder<Color>(
+        valueListenable: _valueColorNotifier,
+        builder: (context, value, child) {
+          return CDKPickerColor(
+            color: value,
+            onChanged: (color) {
+              setState(() {
+                _valueColorNotifier.value = color;
+                appData.setBackgroundColor(color);
+              });
+            },
+          );
         },
       ),
     );
