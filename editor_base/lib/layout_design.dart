@@ -159,7 +159,7 @@ class LayoutDesignState extends State<LayoutDesign> {
                   /*----------------------------DRAWING------------------------------*/
                   if (appData.toolSelected == "shape_drawing") {
                     Size docSize =
-                        Size(appData.docSize.width, appData.docSize.height);
+                    Size(appData.docSize.width, appData.docSize.height);
                     appData.addNewShape(_getDocPosition(
                         event.localPosition,
                         appData.zoom,
@@ -188,20 +188,36 @@ class LayoutDesignState extends State<LayoutDesign> {
                     setState(() {});
                     /*----------------------------MULTIlINEA------------------------------*/
                   } else if (appData.toolSelected == "shape_multiline") {
-                    _startpoint = _getDocPosition(
-                      event.localPosition,
-                      appData.zoom,
-                      constraints.maxWidth,
-                      constraints.maxHeight,
-                      appData.docSize.width,
-                      appData.docSize.height,
-                      _scrollCenter.dx,
-                      _scrollCenter.dy,
-                    );
-
-                    // Inicializa la lista de puntos
-
-                    paintingLine = true;
+                    if (paintingLine) {
+                      // Agregar el punto actual a la lista de vértices
+                      Offset currentPoint = _getDocPosition(
+                        event.localPosition,
+                        appData.zoom,
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                        appData.docSize.width,
+                        appData.docSize.height,
+                        _scrollCenter.dx,
+                        _scrollCenter.dy,
+                      );
+                      appData.newShape.vertices.add(currentPoint);
+                    } else {
+                      // Comenzar el dibujo de líneas múltiples
+                      paintingLine = true;
+                      appData.newShape.vertices.clear(); // Limpiar la lista de vértices
+                      // Agregar el primer punto a la lista de vértices
+                      Offset startPoint = _getDocPosition(
+                        event.localPosition,
+                        appData.zoom,
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                        appData.docSize.width,
+                        appData.docSize.height,
+                        _scrollCenter.dx,
+                        _scrollCenter.dy,
+                      );
+                      appData.newShape.vertices.add(startPoint);
+                    }
                     setState(() {});
                     /*----------------------------rectangle------------------------------*/
                   }
@@ -247,7 +263,7 @@ class LayoutDesignState extends State<LayoutDesign> {
                     }
                   }
                   /*
-                  
+
                   */
                   setState(() {});
                 },
@@ -267,7 +283,7 @@ class LayoutDesignState extends State<LayoutDesign> {
                     /*----------------------------DRAWING------------------------------*/
                     if (appData.toolSelected == "shape_drawing") {
                       Size docSize =
-                          Size(appData.docSize.width, appData.docSize.height);
+                      Size(appData.docSize.width, appData.docSize.height);
                       appData.addRelativePointToNewShape(_getDocPosition(
                           event.localPosition,
                           appData.zoom,
@@ -308,7 +324,7 @@ class LayoutDesignState extends State<LayoutDesign> {
                         _scrollCenter.dy,
                       );
 
-                      appData.newShape.vertices = [_startpoint, currentPoint];
+                      appData.newShape.vertices.add(currentPoint);
 
                       appData.notifyListeners();
                       /*----------------------------rectangle------------------------------*/
@@ -383,94 +399,90 @@ class LayoutDesignState extends State<LayoutDesign> {
                 },
                 /*----------------------------DEJAR DE HACER CLICK AL RATON------------------------------*/
                 onPointerUp: (event) {
-                  _isMouseButtonPressed = false;
+                _isMouseButtonPressed = false;
 
-                  if (appData.toolSelected == "shape_drawing") {
-                    appData.addNewShapeToShapesList();
-                  }
+                if (appData.toolSelected == "shape_drawing") {
+                appData.addNewShapeToShapesList();
+                } else if (appData.toolSelected == "shape_line" && paintingLine == true) {
+                Size docSize = Size(appData.docSize.width, appData.docSize.height);
+                appData.addRelativePointToNewShape(_getDocPosition(
+                event.localPosition,
+                appData.zoom,
+                constraints.maxWidth,
+                constraints.maxHeight,
+                docSize.width,
+                docSize.height,
+                _scrollCenter.dx,
+                _scrollCenter.dy));
+                appData.addNewShapeToShapesList();
+                paintingLine = false;
+                } else if (appData.toolSelected == "shape_multiline" && paintingLine == true) {
+                if (_doubleTapTimer != null && _doubleTapTimer!.isActive) {
+                _doubleTapTimer!.cancel();
+                appData.addNewShapeToShapesList();
+                paintingLine = false; // Cambiar la variable a falso
+                clickCount = 0;
+                } else {
+                _doubleTapTimer = Timer(Duration(milliseconds: 300), () {
+                clickCount = 0;
+                });
+                }
+                } else if (paintingEllipse &&
+                appData.toolSelected == "shape_rectangle") {
+                // Finish drawing the rectangle
+                paintingEllipse = false;
 
-                  //con esto hago la tool de dibujar si se seleciona el de las peqeñas lineas
+                // Optionally, add the rectangle shape to the shapes list
+                if (appData.newShape.vertices.length >= 4) {
+                appData.addNewShapeToShapesList();
+                }
 
-                  else if (appData.toolSelected == "shape_line" &&
-                      paintingLine == true) {
-                    Size docSize =
-                        Size(appData.docSize.width, appData.docSize.height);
-                    appData.addRelativePointToNewShape(_getDocPosition(
-                        event.localPosition,
-                        appData.zoom,
-                        constraints.maxWidth,
-                        constraints.maxHeight,
-                        docSize.width,
-                        docSize.height,
-                        _scrollCenter.dx,
-                        _scrollCenter.dy));
-                    appData.addNewShapeToShapesList();
-                    paintingLine = false;
-                  } else if (appData.toolSelected == "shape_multiline" &&
-                      paintingLine == true) {
-                    if (_doubleTapTimer != null && _doubleTapTimer!.isActive) {
-                      _doubleTapTimer!.cancel();
-                      appData.addNewShapeToShapesList();
-                      paintingLine = false; // Cambiar la variable a falso
+                setState(() {});
+                }
+                if (_isDrawingEllipse && appData.toolSelected == "shape_ellipsis") {
+                // Finish drawing the ellipse
+                _isDrawingEllipse = false;
 
-                      clickCount = 0;
-                    } else {
-                      _doubleTapTimer = Timer(Duration(milliseconds: 300), () {
-                        clickCount = 0;
-                      });
-                    }
-                  } else if (paintingEllipse &&
-                      appData.toolSelected == "shape_rectangle") {
-                    // Finish drawing the rectangle
-                    paintingEllipse = false;
+                // Optionally, add the ellipse shape to the shapes list
+                if (appData.newShape.vertices.length >= 4) {
+                appData.addNewShapeToShapesList();
+                }
 
-                    // Optionally, add the rectangle shape to the shapes list
-                    if (appData.newShape.vertices.length >= 4) {
-                      appData.addNewShapeToShapesList();
-                    }
+                setState(() {});
+                } else if (appData.toolSelected == "pointer_shapes" && appData.selectedShapeIndex != -1) {
+                Size docSize = Size(appData.docSize.width, appData.docSize.height);
+                Offset docPosition = _getDocPosition(
+                event.localPosition,
+                appData.zoom,
+                constraints.maxWidth,
+                constraints.maxHeight,
+                docSize.width,
+                docSize.height,
+                _scrollCenter.dx,
+                _scrollCenter.dy);
+                Offset newShapePosition = docPosition - _dragStartOffset;
 
-                    setState(() {});
-                  }
-                  if (_isDrawingEllipse &&
-                      appData.toolSelected == "shape_ellipsis") {
-                    // Finish drawing the ellipse
-                    _isDrawingEllipse = false;
+                if (_dragStartPosition != newShapePosition) {
+                appData.setShapePosition(newShapePosition);
+                }
+                ActionMoveShape action = ActionMoveShape(
+                appData,
+                appData.selectedShapeIndex,
+                _dragStartPosition,
+                newShapePosition,
+                );
+                appData.actionManager.register(action);
+                }
 
-                    // Optionally, add the ellipse shape to the shapes list
-                    if (appData.newShape.vertices.length >= 4) {
-                      appData.addNewShapeToShapesList();
-                    }
+                // Finish drawing multiline when right mouse button is clicked
+                if (appData.toolSelected == "shape_multiline" && event.buttons == 2) {
+                appData.addNewShapeToShapesList();
+                paintingLine = false;
+                }
 
-                    setState(() {});
-                  } else if (appData.toolSelected == "pointer_shapes" &&
-                      appData.selectedShapeIndex != -1) {
-                    Size docSize =
-                        Size(appData.docSize.width, appData.docSize.height);
-                    Offset docPosition = _getDocPosition(
-                        event.localPosition,
-                        appData.zoom,
-                        constraints.maxWidth,
-                        constraints.maxHeight,
-                        docSize.width,
-                        docSize.height,
-                        _scrollCenter.dx,
-                        _scrollCenter.dy);
-                    Offset newShapePosition = docPosition - _dragStartOffset;
-
-                    if (_dragStartPosition != newShapePosition) {
-                      appData.setShapePosition(newShapePosition);
-                    }
-                    ActionMoveShape action = ActionMoveShape(
-                      appData,
-                      appData.selectedShapeIndex,
-                      _dragStartPosition,
-                      newShapePosition,
-                    );
-                    appData.actionManager.register(action);
-                  }
-
-                  setState(() {});
+                setState(() {});
                 },
+
                 onPointerSignal: (pointerSignal) {
                   if (pointerSignal is PointerScrollEvent) {
                     if (!_isMouseButtonPressed) {
@@ -544,14 +556,14 @@ class LayoutDesignState extends State<LayoutDesign> {
   }
 
   List<Offset> _calculateEllipseVertices(
-    Offset center,
-    double radius,
-    double zoom,
-  ) {
+      Offset center,
+      double radius,
+      double zoom,
+      ) {
     List<Offset> vertices = [];
 
     int segments =
-        36; // You can adjust the number of segments for a smoother ellipse
+    36; // You can adjust the number of segments for a smoother ellipse
 
     for (int i = 0; i < segments; i++) {
       double angle = (2 * 3.14159265358979323846 * i) / segments;
