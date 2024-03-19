@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'app_data.dart';
 import 'layout.dart';
-
+import 'package:clipboard/clipboard.dart';
 void main() async {
   // For Linux, macOS and Windows, initialize WindowManager
   try {
@@ -105,19 +105,38 @@ void _copyToClipboard(AppData appData) {
     Clipboard.setData(ClipboardData(text: jsonString));
   }
 }
-
 Future<void> _pasteFromClipboard(AppData appData) async {
   try {
-    String? jsonString = await Clipboard.getData(Clipboard.kTextPlain)?.then((value) => value?.text);
-    if (jsonString != null) {
-      Map<String, dynamic> map = jsonDecode(jsonString);
-      if (map['type'] == 'shape_drawing') {
-        var shape = Shape.fromMap(map);
-        appData.actionManager.register(ActionAddNewShape(appData, shape));
+    if (Platform.isWindows) {
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+      if (clipboardData != null && clipboardData.text != null) {
+        final jsonString = clipboardData.text!;
+        print('Clipboard data: $jsonString');
+        final Map<String, dynamic> map = jsonDecode(jsonString);
+        if (map['type'] == 'shape_drawing') {
+          final shape = Shape.fromMap(map['object']);
+          appData.actionManager.register(ActionAddNewShape(appData, shape));
+        }
+      } else {
+        print('No data found in clipboard');
+      }
+    }else if (Platform.isLinux) {
+      // Utiliza la función `getData` del paquete `clipboard` para obtener los datos del portapapeles
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+      if (clipboardData != null && clipboardData.text != null) {
+        final jsonString = clipboardData.text!;
+        print('Clipboard data: $jsonString');
+        final Map<String, dynamic> map = jsonDecode(jsonString);
+        if (map['type'] == 'shape_drawing') {
+          final shape = Shape.fromMap(map['object']);
+          appData.actionManager.register(ActionAddNewShape(appData, shape));
+        }
+      } else {
+        print('No data found in clipboard');
       }
     }
   } catch (e) {
-    
-    print("Error pasting from clipboard: $e");
+    print("Error pasting from clipboard");
   }
 }
+
