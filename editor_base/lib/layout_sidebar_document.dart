@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_cupertino_desktop_kit/cdk.dart';
 import 'package:provider/provider.dart';
 import 'app_data.dart';
+import 'dart:convert';
 
 class LayoutSidebarDocument extends StatefulWidget {
   const LayoutSidebarDocument({Key? key}) : super(key: key);
@@ -15,7 +16,7 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
   late Widget _preloadedColorPicker;
   final GlobalKey<CDKDialogPopoverState> _anchorColorButton = GlobalKey();
   final ValueNotifier<Color> _valueColorNotifier =
-  ValueNotifier(const Color(0x800080FF));
+      ValueNotifier(const Color(0x800080FF));
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
     Color backgroundColor = theme.backgroundSecondary2;
 
     TextStyle fontBold =
-    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold);
+        const TextStyle(fontSize: 12, fontWeight: FontWeight.bold);
     TextStyle font = const TextStyle(fontSize: 12, fontWeight: FontWeight.w400);
 
     return Container(
@@ -118,8 +119,7 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
                 children: [
                   CupertinoButton.filled(
                     minSize: 0,
-                    padding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     onPressed: () {
                       // Acción al cargar el archivo
                     },
@@ -128,8 +128,7 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
                   SizedBox(width: 8),
                   CupertinoButton.filled(
                     minSize: 0,
-                    padding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     onPressed: () {
                       _saveSvgFile(appData);
                     },
@@ -138,10 +137,10 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
                   SizedBox(width: 8),
                   CupertinoButton.filled(
                     minSize: 0,
-                    padding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     onPressed: () {
                       // Acción para exportar como SVG
+                      _saveCustomFormat(appData);
                     },
                     child: Text("Save"),
                   ),
@@ -201,6 +200,21 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
     print('SVG file saved at: $filePath');
   }
 
+  void _saveCustomFormat(AppData appData) {
+    // Genera el contenido personalizado
+    String customData = _generateCustomContent(appData);
+
+    // Directorio de documentos de la aplicación
+    Directory documentsDirectory = Directory.current;
+    String filePath = '${documentsDirectory.path}/drawing.txt';
+    File customFile = File(filePath);
+
+    // Guarda el contenido personalizado en un archivo
+    customFile.writeAsStringSync(customData);
+
+    print('Datos de la aplicación guardados en: $filePath');
+  }
+
   String _generateSvgContent(AppData appData) {
     // Inicializa el contenido SVG con la etiqueta raíz
     StringBuffer svgContent = StringBuffer();
@@ -243,6 +257,30 @@ class LayoutSidebarDocumentState extends State<LayoutSidebarDocument> {
 
     return svgContent.toString();
   }
+}
 
+// Función para cargar y mostrar nuevamente el contenido del archivo
 
+String _generateCustomContent(AppData appData) {
+  // Inicializa el contenido personalizado
+  StringBuffer customContent = StringBuffer();
+
+  // Agrega la información necesaria al contenido personalizado
+  customContent.writeln('Custom Data:');
+  customContent.writeln(
+      'Document Size: ${appData.docSize.width} x ${appData.docSize.height}');
+  customContent.writeln('Shapes List:');
+  for (var shape in appData.shapesList) {
+    customContent.writeln(' - Shape: ${shape.runtimeType}');
+    customContent.writeln('   Vertices:');
+    for (var vertex in shape.vertices) {
+      customContent.writeln('     - x: ${vertex.dx}, y: ${vertex.dy}');
+    }
+    customContent.writeln('   Closed: ${shape.closed}');
+    customContent.writeln('   Fill Color: ${shape.fillColor}');
+    customContent.writeln('   Stroke Color: ${shape.color}');
+    customContent.writeln('   Stroke Width: ${shape.stroke}');
+  }
+
+  return customContent.toString();
 }
